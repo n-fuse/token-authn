@@ -268,6 +268,23 @@ class TokenAuthN {
       this.clearToken(); // Delete ´remember me´ data
     }
   }
+
+  // Inject the bearer token into the request as soon as it is available
+  addBearerToken() {
+    return req=>{
+      var promise = this.promise;
+      if(parseIRI(req.url).hostname===parseIRI(this.oAuthURL).hostname) {
+        promise = this.promise.then(() => {
+          var tokenInfo = this.tokenInfo;
+          if (tokenInfo && tokenInfo.accessToken) {
+            req.opts.headers = req.opts.headers || {};
+            req.opts.headers.Authorization = 'Bearer ' + tokenInfo.accessToken;
+          }
+        });
+      }
+      return promise.then(()=>req);
+    }
+  }
 }
 
 
