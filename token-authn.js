@@ -187,6 +187,8 @@ class TokenAuthN {
         self.refreshTimeoutFn = setTimeout(function() {
           self.tryTokenRefresh();
         }, 300 * 1000);
+      } else {
+        self.clearToken();
       }
     });
   }
