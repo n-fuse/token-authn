@@ -1,4 +1,5 @@
-import { default as PAjax, parseIRI } from 'pajax';
+import PAjax from 'pajax';
+import { parseIRI } from 'iri';
 import _clone from 'lodash/lang/clone';
 import store from 'store';
 import StateMachine from 'state-machine';
