@@ -1,5 +1,4 @@
-import PAjax from 'pajax';
-import { parseIRI } from 'iri';
+import Pajax from 'pajax';
 import _clone from 'lodash/lang/clone';
 import store from 'store';
 import StateMachine from 'state-machine';
@@ -9,16 +8,11 @@ import moment from 'moment';
 class TokenAuthN {
   constructor(oAuthURL) {
     this.oAuthURL = oAuthURL;
-    this.loginAjax = new PAjax({
-      contentType: 'application/x-www-form-urlencoded',
-      responseType: 'json',
+    this.pajax = new Pajax.URLEncoded({
       headers: {
         Accept: 'application/json'
       }
     });
-
-    this.logoutAjax = new PAjax('json-ld');
-    this.logoutAjax.use(this);
 
     StateMachine.create({
       target: this,
@@ -96,39 +90,36 @@ class TokenAuthN {
   }
 
   login(username, password, rememberMe) {
-    var self = this;
-
     this.useCredentials();
+    return this.pajax.post(this.oAuthURL)
+                     .send({
+                            'grant_type': 'password',
+                            'password': password,
+                            'username': username
+                           })
+                    .done()
+                    .then(res=>{
+                      var data = res.body;
+                      var now = moment();
+                      var accessTokenExp = now.add(data.expires_in, 'seconds');
 
-    return this.loginAjax.post(this.oAuthURL, {
-        'grant_type': 'password',
-        'password': password,
-        'username': username
-      },
-      {
-        repsonseType: 'json'
-      }).then(function(data) {
-        var now = moment();
-        var accessTokenExp = now.add(data.expires_in, 'seconds');
-
-        self.tokenInfo = {
-          username: username,
-          rememberMe: rememberMe,
-          accessToken: data.access_token,
-          accessTokenExp: accessTokenExp,
-          refreshToken: data.refresh_token
-        };
-        self.tokenValid();
-        self.scheduleTokenRefresh(25);
-        self.saveToken();
-      }).catch( function(err) {
-        self.tokenInvalidated();
-        return Promise.reject(err);
-      });
+                      this.tokenInfo = {
+                        username: username,
+                        rememberMe: rememberMe,
+                        accessToken: data.access_token,
+                        accessTokenExp: accessTokenExp,
+                        refreshToken: data.refresh_token
+                      };
+                      this.tokenValid();
+                      this.scheduleTokenRefresh(25);
+                      this.saveToken();
+                    }).catch(err=>{
+                      this.tokenInvalidated();
+                      return Promise.reject(err);
+                    });
   }
 
   logout() {
-    var self = this;
     var tokenInfo = this.tokenInfo;
     if(!tokenInfo || !tokenInfo.accessToken) {
       log.warn('No access token found');
@@ -136,13 +127,16 @@ class TokenAuthN {
 
     this.unSchedule();
 
-    var invalidate = function() {
-      self.tokenInvalidated();
-      self.clearToken(); // Delete ´remember me´ data
+    var invalidate = res=>{
+      this.tokenInvalidated();
+      this.clearToken(); // Delete ´remember me´ data
     };
 
     // delete token regardless of the outcome
-    return this.logoutAjax.del(this.oAuthURL).then(invalidate, invalidate);
+    return Pajax.del(this.oAuthURL)
+                .before(this.addBearerToken())
+                .done()
+                .then(invalidate, invalidate);
   }
 
   /* ------------- Token operations (internal) ------------ */
@@ -150,48 +144,50 @@ class TokenAuthN {
    @private
    */
   tryTokenRefresh(tokenInfo) {
-    var self = this;
-
     tokenInfo = tokenInfo || this.tokenInfo || {};
 
     if(!tokenInfo.refreshToken) {
       log.debug('No refresh token found');
       return Promise.resolve();
     }
+    return this.pajax.post(this.oAuthURL)
+                     .send({
+                            grant_type: 'refresh_token',
+                            client_id: 'res_owner@invend.eu',
+                            client_secret: 'res_owner',
+                            refresh_token: tokenInfo.refreshToken
+                           })
+                    .done()
+                    .then(res=>{
+                      var data = res.body;
+                      var now = moment();
+                      var accessTokenExp = now.add(data.expires_in, 'seconds');
 
-    return this.loginAjax.post(this.oAuthURL, {
-      grant_type: 'refresh_token',
-      client_id: 'res_owner@invend.eu',
-      client_secret: 'res_owner',
-      refresh_token: tokenInfo.refreshToken
-    }).then(function(data) {
-      var now = moment();
-      var accessTokenExp = now.add(data.expires_in, 'seconds');
+                      tokenInfo.accessToken = data.access_token;
+                      tokenInfo.accessTokenExp = accessTokenExp;
+                      tokenInfo.refreshToken = data.refresh_token;
 
-      tokenInfo.accessToken = data.access_token;
-      tokenInfo.accessTokenExp = accessTokenExp;
-      tokenInfo.refreshToken = data.refresh_token;
+                      this.tokenInfo = tokenInfo;
+                      this.saveToken();
+                      // Schedule token refresh trial 25 min before expiration
+                      this.scheduleTokenRefresh();
+                      this.tokenValid();
 
-      self.tokenInfo = tokenInfo;
-      self.saveToken();
-      // Schedule token refresh trial 25 min before expiration
-      self.scheduleTokenRefresh();
-      self.tokenValid();
-
-      log.debug(this.oAuthURL + ': authN token refreshed');
-    }).catch(function(err) {
-      self.tokenExpired();
-      log.error('Token refresh error', err);
-      // Only retry if we have a non-auth error
-      if (!(err.status === 400 || err.status === 401)) {
-        // Schedule retry token refresh in 5 min from now
-        self.refreshTimeoutFn = setTimeout(function() {
-          self.tryTokenRefresh();
-        }, 300 * 1000);
-      } else {
-        self.clearToken();
-      }
-    });
+                      log.debug(this.oAuthURL + ': authN token refreshed');
+                    }).catch(err=>{
+                      this.tokenExpired();
+                      log.error('Token refresh error', err);
+                      // Only retry if we have a non-auth error
+                      if (!(err.status === 400 || err.status === 401)) {
+                        // Schedule retry token refresh in 5 min from now
+                        this.refreshTimeoutFn = setTimeout(()=>{
+                          this.tryTokenRefresh();
+                        }, 300 * 1000);
+                      } else {
+                        // Remove invalid token from local storage
+                        this.clearToken();
+                      }
+                    });
   }
 
   // Schedule token refresh and logout timers
@@ -199,8 +195,6 @@ class TokenAuthN {
    @private
    */
   scheduleTokenRefresh(expiryDistance) {
-    var self = this;
-
     expiryDistance = expiryDistance || 25;
 
     var tokenInfo = this.tokenInfo;
@@ -214,15 +208,15 @@ class TokenAuthN {
     // Schedule token refresh in ´expiry date´ - ´expiryDistance min´
     accessTokenExpOffset = moment(accessTokenExp).subtract(expiryDistance, 'minutes');
     timeOutMilis = accessTokenExpOffset.diff(moment());
-    this.refreshTimeoutFn = setTimeout(function() {
-      self.tryTokenRefresh();
+    this.refreshTimeoutFn = setTimeout(()=>{
+      this.tryTokenRefresh();
     }, timeOutMilis);
 
     // Schedule logout state shortly before the token expires
     accessTokenExpOffset = moment(accessTokenExp).subtract(5, 'seconds');
     timeOutMilis = accessTokenExpOffset.diff(moment());
-    this.expireTimeoutFn = setTimeout(function() {
-      self.tokenExpired();
+    this.expireTimeoutFn = setTimeout(()=>{
+      this.tokenExpired();
     }, timeOutMilis);
   }
 
@@ -251,32 +245,11 @@ class TokenAuthN {
     }
   }
 
-  // Inject the l10n info to the ajax as soon as it is available
-  beforeSend(req, xhr) {
-    if(parseIRI(req.url).hostname===parseIRI(this.oAuthURL).hostname) {
-      return this.promise.then(() => {
-        var tokenInfo = this.tokenInfo;
-        if (tokenInfo && tokenInfo.accessToken) {
-          xhr.setRequestHeader('Authorization', 'Bearer ' + tokenInfo.accessToken);
-        }
-      });
-    }
-  }
-
-  afterSend(req, xhr, result) {
-    // delete token when 40? invalid token
-    if(result.status===401) {
-      // TODO: Not sure if needed
-      this.tokenInvalidated();
-      this.clearToken(); // Delete ´remember me´ data
-    }
-  }
-
   // Inject the bearer token into the request as soon as it is available
   addBearerToken() {
     return req=>{
       var promise = this.promise;
-      if(parseIRI(req.url).hostname===parseIRI(this.oAuthURL).hostname) {
+      if(Pajax.parseURL(req.url).hostname===Pajax.parseURL(this.oAuthURL).hostname) {
         promise = this.promise.then(() => {
           var tokenInfo = this.tokenInfo;
           if (tokenInfo && tokenInfo.accessToken) {
@@ -288,7 +261,17 @@ class TokenAuthN {
       return promise.then(()=>req);
     }
   }
-}
 
+  validateResponse() {
+    return res=>{
+      // delete token when 40? invalid token
+      if(res.status===401) {
+        // TODO: Not sure if needed
+        this.tokenInvalidated();
+        this.clearToken(); // Delete ´remember me´ data
+      }
+    }
+  }
+}
 
 export default TokenAuthN;
