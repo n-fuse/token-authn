@@ -270,6 +270,7 @@ class TokenAuthN {
         this.tokenInvalidated();
         this.clearToken(); // Delete ´remember me´ data
       }
+      return Promise.resolve(res);
     }
   }
 }
