@@ -251,17 +251,13 @@ class TokenAuthN {
   // Inject the bearer token into the request as soon as it is available
   addBearerToken() {
     return req=>{
-      var promise = this.promise;
       if(Pajax.parseURL(req.url).hostname===Pajax.parseURL(this.oAuthURL).hostname) {
-        promise = this.promise.then(() => {
-          var tokenInfo = this.tokenInfo;
-          if (tokenInfo && tokenInfo.accessToken) {
-            req.opts.headers = req.opts.headers || {};
-            req.opts.headers.Authorization = 'Bearer ' + tokenInfo.accessToken;
-          }
-        });
+        var tokenInfo = this.tokenInfo;
+        if (tokenInfo && tokenInfo.accessToken) {
+          req.opts.headers = req.opts.headers || {};
+          req.opts.headers.Authorization = 'Bearer ' + tokenInfo.accessToken;
+        }
       }
-      return promise.then(()=>req);
     }
   }
 
