@@ -8,6 +8,7 @@ import moment from 'moment';
 class TokenAuthN {
   constructor(oAuthURL) {
     this.oAuthURL = oAuthURL;
+
     this.pajax = new Pajax.URLEncoded({
       headers: {
         Accept: 'application/json'
@@ -16,18 +17,20 @@ class TokenAuthN {
 
     StateMachine.create({
       target: this,
-      initial: 'unkown',
+      initial: 'uninitialized',
       events: [
-        { name: 'useToken', from: ['loggedOut', 'unkown'],   to: 'loggingIn' },
-        { name: 'useCredentials', from: ['loggedOut', 'unkown'],   to: 'loggingIn'  },
+        { name: 'useToken', from: ['loggedOut', 'uninitialized'],   to: 'loggingIn' },
+        { name: 'useCredentials', from: ['loggedOut', 'uninitialized'],   to: 'loggingIn'  },
         { name: 'tokenValid', from: '*',   to: 'loggedIn'  },
         { name: 'tokenExpired', from: '*',   to: 'loggedOut'  },
         { name: 'tokenInvalidated', from: '*',   to: 'loggedOut'  }
       ]
     });
+  }
 
-    // Validate saved token when initializing
-    this.promise = new Promise((resolve, reject) => {
+  // Read and validate saved token
+  useLocalToken() {
+    return new Promise((resolve, reject) => {
       var p;
 
       var tokenInfo = this.readToken();
