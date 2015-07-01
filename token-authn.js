@@ -17,10 +17,10 @@ class TokenAuthN {
 
     StateMachine.create({
       target: this,
-      initial: 'uninitialized',
+      initial: 'loggedOut',
       events: [
-        { name: 'useToken', from: ['loggedOut', 'uninitialized'],   to: 'loggingIn' },
-        { name: 'useCredentials', from: ['loggedOut', 'uninitialized'],   to: 'loggingIn'  },
+        { name: 'useToken', from: ['loggedOut'],   to: 'loggingIn' },
+        { name: 'useCredentials', from: ['loggedOut'],   to: 'loggingIn'  },
         { name: 'tokenValid', from: '*',   to: 'loggedIn'  },
         { name: 'tokenExpired', from: '*',   to: 'loggedOut'  },
         { name: 'tokenInvalidated', from: '*',   to: 'loggedOut'  }
