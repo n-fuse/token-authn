@@ -14,11 +14,12 @@ import TokenAuthN from 'token-authn';
 
 var authN = new TokenAuthN(oAuthURL);
 
+authN.useLocalToken().then(...);
 authN.login(username, password, rememberMe).then(...);
 authN.logout().then(...);
 
+authN.loggedIn;  // true or false
 authN.tokenInfo; // Contains access and refresh token
-
 ```
 
 ### Additional information
@@ -28,18 +29,18 @@ authN.tokenInfo; // Contains access and refresh token
 
 All API operations are promise based.
 
-On initialization:
+On `useLocalToken()` call:
  - See if persisted token info exists in local storage and read token info
  - See if the 'access_token' is not expired yet
  - If it is, see if a refresh token exists an use it to get a new access token
  - If it fails, the promise rejects
 
-On successful authentication:
+On successful `login()` call:
  - Persist the token info
  - If 'remember me' has not been requested, persist anyways but
 omit the refresh token as this is only relevant in case of a browser crash
 
-On log-out:
+On `logout()` call:
  - Perform DELETE against token end-point to invalidate the session
  - Delete any persisted token info from local storage
 
