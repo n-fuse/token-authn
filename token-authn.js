@@ -95,12 +95,12 @@ class TokenAuthN {
   login(username, password, rememberMe) {
     this.useCredentials();
     return this.pajax.post(this.oAuthURL)
-                     .send({
+                     .attach({
                             'grant_type': 'password',
                             'password': password,
                             'username': username
                            })
-                    .done()
+                    .send()
                     .then(res=>{
                       var data = res.body;
                       var now = moment();
@@ -138,7 +138,7 @@ class TokenAuthN {
     // delete token regardless of the outcome
     return Pajax.del(this.oAuthURL)
                 .before(this.addBearerToken())
-                .done()
+                .send()
                 .then(invalidate, invalidate);
   }
 
@@ -154,13 +154,13 @@ class TokenAuthN {
       return Promise.resolve();
     }
     return this.pajax.post(this.oAuthURL)
-                     .send({
+                     .attach({
                             grant_type: 'refresh_token',
                             client_id: 'res_owner@invend.eu',
                             client_secret: 'res_owner',
                             refresh_token: tokenInfo.refreshToken
                            })
-                    .done()
+                    .send()
                     .then(res=>{
                       var data = res.body;
                       var now = moment();
