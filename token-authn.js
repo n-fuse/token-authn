@@ -288,6 +288,18 @@ class TokenAuthN {
       return promise.then(()=>req);
     }
   }
+
+  setBearerToken(username, accessToken, accessTokenExp, rememberMe, refreshToken) {
+    rememberMe = rememberMe || true;
+    this.tokenInfo = {
+      username: username,
+      rememberMe: rememberMe,
+      accessToken: accessToken,
+      accessTokenExp: accessTokenExp,
+      refreshToken: refreshToken,
+    };
+    this.saveToken();
+  }
 }
 
 
