@@ -268,6 +268,18 @@ class TokenAuthN {
     };
   }
 
+  setBearerToken(username, accessToken, accessTokenExp, rememberMe, refreshToken) {
+    rememberMe = rememberMe || true;
+    this.tokenInfo = {
+      username: username,
+      rememberMe: rememberMe,
+      accessToken: accessToken,
+      accessTokenExp: accessTokenExp,
+      refreshToken: refreshToken,
+    };
+    this.saveToken();
+  }
+
   validateResponse() {
     return res=> {
       // delete token when 40? invalid token
