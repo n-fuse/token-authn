@@ -107,7 +107,7 @@ class TokenAuthN {
       refreshToken: refreshToken,
     };
     this.tokenValid();
-    this.heduleTokenRefresh(25);
+    this.scheduleTokenRefresh(25);
     this.saveToken();
   }
 
