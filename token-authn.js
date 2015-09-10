@@ -291,6 +291,8 @@ class TokenAuthN {
 
   setBearerToken(username, accessToken, accessTokenExp, rememberMe, refreshToken) {
     rememberMe = rememberMe || true;
+    var now = moment();
+    accessTokenExp = now.add(accessTokenExp, 'seconds');
     this.tokenInfo = {
       username: username,
       rememberMe: rememberMe,
