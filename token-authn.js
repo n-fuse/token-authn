@@ -175,7 +175,8 @@ class TokenAuthN {
       return Promise.resolve();
     }
 
-    return this.loginAjax.post(this.oAuthURL, {
+    var oAuthURL = this.oAuthURL;
+    return this.loginAjax.post(oAuthURL, {
       grant_type: 'refresh_token',
       client_id: 'res_owner@invend.eu',
       client_secret: 'res_owner',
@@ -194,7 +195,7 @@ class TokenAuthN {
       self.scheduleTokenRefresh();
       self.tokenValid();
 
-      log.debug(this.oAuthURL + ': authN token refreshed');
+      log.debug(oAuthURL + ': authN token refreshed');
     }).catch(function(err) {
       self.tokenExpired();
       log.error('Token refresh error', err);
