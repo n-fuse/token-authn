@@ -95,6 +95,22 @@ class TokenAuthN {
     this.tokenInfo = null;
   }
 
+  setBearerToken(username, accessToken, accessTokenExp, rememberMe, refreshToken) {
+    rememberMe = rememberMe || true;
+    var now = moment();
+    accessTokenExp = now.add(accessTokenExp, 'seconds');
+    this.tokenInfo = {
+      username: username,
+      rememberMe: rememberMe,
+      accessToken: accessToken,
+      accessTokenExp: accessTokenExp,
+      refreshToken: refreshToken,
+    };
+    this.tokenValid();
+    this.heduleTokenRefresh(25);
+    this.saveToken();
+  }
+
   login(username, password, rememberMe) {
     var self = this;
 
@@ -287,20 +303,6 @@ class TokenAuthN {
       }
       return promise.then(()=>req);
     }
-  }
-
-  setBearerToken(username, accessToken, accessTokenExp, rememberMe, refreshToken) {
-    rememberMe = rememberMe || true;
-    var now = moment();
-    accessTokenExp = now.add(accessTokenExp, 'seconds');
-    this.tokenInfo = {
-      username: username,
-      rememberMe: rememberMe,
-      accessToken: accessToken,
-      accessTokenExp: accessTokenExp,
-      refreshToken: refreshToken,
-    };
-    this.saveToken();
   }
 }
 
