@@ -11,20 +11,20 @@ class TokenAuthN {
 
     this.pajax = new Pajax.URLEncoded({
       headers: {
-        Accept: 'application/json',
-      },
+        Accept: 'application/json'
+      }
     });
 
     StateMachine.create({
       target: this,
-      initial: 'loggedOut',
+      initial: 'newSession',
       events: [
-        { name: 'useToken', from: ['loggedOut'],   to: 'loggingIn' },
-        { name: 'useCredentials', from: ['loggedOut'],   to: 'loggingIn'  },
-        { name: 'tokenValid', from: '*',   to: 'loggedIn'  },
-        { name: 'tokenExpired', from: '*',   to: 'loggedOut'  },
-        { name: 'tokenInvalidated', from: '*',   to: 'loggedOut'  },
-      ],
+        { name: 'useToken', from: ['newSession', 'loggedOut'],   to: 'loggingIn' },
+        { name: 'useCredentials', from: ['newSession', 'loggedOut'],   to: 'loggingIn'  },
+        { name: 'tokenValid', from: ['loggedOut', 'loggingIn'],   to: 'loggedIn'  },
+        { name: 'tokenExpired', from: ['loggedIn', 'loggingIn'],   to: 'loggedOut'  },
+        { name: 'tokenInvalidated', from: ['loggedIn', 'loggingIn'],   to: 'loggedOut'  }
+      ]
     });
   }
 
@@ -51,10 +51,9 @@ class TokenAuthN {
         } else {
           this.tokenExpired();
         }
-      } else {
+      }/* else {
         this.tokenInvalidated();
-      }
-
+      }*/
       resolve(p);
     });
   }
@@ -81,11 +80,14 @@ class TokenAuthN {
     return this.tokenInfo ? this.tokenInfo.username : null;
   }
 
+  get newSession() {
+    return this.current === 'newSession';
+  }
+
   onenterstate() {
     log.debug(`${this.oAuthURL}: authN state changed to "${this.current}"`);
     this.trigger('stateChanged', this.current);
   }
-
   ontokenExpired() {
     this.tokenInfo = null;
   }
@@ -98,12 +100,12 @@ class TokenAuthN {
     this.useCredentials();
     return this.pajax.post(this.oAuthURL)
                      .attach({
-                       grant_type: 'password',
-                       password: password,
-                       username: username,
-                     })
-              .send()
-                    .then(res=> {
+                            'grant_type': 'password',
+                            'password': password,
+                            'username': username
+                           })
+                    .send()
+                    .then(res=>{
                       var data = res.body;
                       var now = moment();
                       var accessTokenExp = now.add(data.expires_in, 'seconds');
@@ -113,7 +115,7 @@ class TokenAuthN {
                         rememberMe: rememberMe,
                         accessToken: data.access_token,
                         accessTokenExp: accessTokenExp,
-                        refreshToken: data.refresh_token,
+                        refreshToken: data.refresh_token
                       };
                       this.tokenValid();
                       this.scheduleTokenRefresh(25);
@@ -155,16 +157,15 @@ class TokenAuthN {
       log.debug('No refresh token found');
       return Promise.resolve();
     }
-
     return this.pajax.post(this.oAuthURL)
                      .attach({
-                       grant_type: 'refresh_token',
-                       client_id: 'res_owner@invend.eu',
-                       client_secret: 'res_owner',
-                       refresh_token: tokenInfo.refreshToken,
-                     })
-              .send()
-                    .then(res=> {
+                            grant_type: 'refresh_token',
+                            client_id: 'res_owner@invend.eu',
+                            client_secret: 'res_owner',
+                            refresh_token: tokenInfo.refreshToken
+                           })
+                    .send()
+                    .then(res=>{
                       var data = res.body;
                       var now = moment();
                       var accessTokenExp = now.add(data.expires_in, 'seconds');
