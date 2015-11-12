@@ -264,6 +264,8 @@ class TokenAuthN {
         if (tokenInfo && tokenInfo.accessToken) {
           req.opts.headers = req.opts.headers || {};
           req.opts.headers.Authorization = 'Bearer ' + tokenInfo.accessToken;
+        } else {
+          delete req.opts.headers.Authorization;
         }
       }
     };
