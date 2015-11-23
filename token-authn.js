@@ -22,9 +22,9 @@ class TokenAuthN {
       events: [
         { name: 'useToken', from: ['newSession', 'loggedOut'],   to: 'loggingIn' },
         { name: 'useCredentials', from: ['newSession', 'loggedOut'],   to: 'loggingIn'  },
-        { name: 'tokenValid', from: ['loggedOut', 'loggingIn'],   to: 'loggedIn'  },
+        { name: 'tokenValid', from: ['loggedOut', 'loggingIn', 'loggedIn'],   to: 'loggedIn'  },
         { name: 'tokenExpired', from: ['loggedIn', 'loggingIn'],   to: 'loggedOut'  },
-        { name: 'tokenInvalidated', from: ['loggedIn', 'loggingIn'],   to: 'loggedOut'  }
+        { name: 'tokenInvalidated', from: ['loggedIn', 'loggingIn', 'loggedOut'],   to: 'loggedOut'  }
       ]
     });
 
