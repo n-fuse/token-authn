@@ -140,22 +140,20 @@ class TokenAuthN {
   }
 
   logout() {
-    return this.job(()=>{
-      var tokenInfo = this.tokenInfo;
-      if (!tokenInfo || !tokenInfo.accessToken) {
-        log.warn('No access token found');
-      }
-      this.unSchedule();
-      var invalidate = res=> {
-        this.tokenInvalidated();
-        this.clearToken(); // Delete ´remember me´ data
-      };
-      // delete token regardless of the outcome
-      return Pajax.del(this.oAuthURL)
-                  .before(this.addBearerToken())
-                  .send()
-                  .then(invalidate, invalidate);
-    });
+    var tokenInfo = this.tokenInfo;
+    if (!tokenInfo || !tokenInfo.accessToken) {
+      log.warn('No access token found');
+    }
+    this.unSchedule();
+    var invalidate = res=> {
+      this.tokenInvalidated();
+      this.clearToken(); // Delete ´remember me´ data
+    };
+    // delete token regardless of the outcome
+    return Pajax.del(this.oAuthURL)
+                .before(this.addBearerToken())
+                .send()
+                .then(invalidate, invalidate);
   }
 
   /* ------------- Token operations (internal) ------------ */
