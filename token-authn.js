@@ -24,7 +24,7 @@ class TokenAuthN {
         { name: 'useCredentials', from: ['newSession', 'loggedOut'],   to: 'loggingIn'  },
         { name: 'tokenValid', from: ['loggedOut', 'loggingIn', 'loggedIn'],   to: 'loggedIn'  },
         { name: 'tokenExpired', from: ['loggedIn', 'loggingIn'],   to: 'loggedOut'  },
-        { name: 'tokenInvalidated', from: ['loggedIn', 'loggingIn', 'loggedOut'],   to: 'loggedOut'  }
+        { name: 'tokenInvalidated', from: ['*'],   to: 'loggedOut'  }
       ]
     });
 
@@ -301,8 +301,10 @@ class TokenAuthN {
   validateResponse() {
     return res=> {
       // delete token when 401 invalid token
-      if (res.status === 401) {
-        this.logout();
+      if (res.status === 401 && res.body && res.body.error==='invalid_token') {
+        this.unSchedule();
+        this.tokenInvalidated();
+        this.clearToken(); // Delete ´remember me´ data
       }
       return Promise.resolve(res);
     };
