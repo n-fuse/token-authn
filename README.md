@@ -1,6 +1,9 @@
-# token-authn
+# OAuth 2 Token Authentication
 
-Allows OAuth 2 token based user log-in and log-out against an Invend API.
+OAuth 2 bearer token manager and client, supporting refresh tokens.
+
+This library is targeted for the browser as it makes use of 
+the the local storage API.
 
 ### Installation
 ```
@@ -29,22 +32,17 @@ authN.tokenInfo; // Contains access and refresh token
 
 All API operations are promise based.
 
-On `useLocalToken()` call:
+On `useLocalToken()`:
  - See if persisted token info exists in local storage and read token info
  - See if the 'access_token' is not expired yet
  - If it is, see if a refresh token exists an use it to get a new access token
  - If it fails, the promise rejects
 
-On successful `login()` call:
+On successful `login()`:
  - Persist the token info
- - If 'remember me' has not been requested, persist anyways but
-omit the refresh token as this is only relevant in case of a browser crash
+ - If `rememberMe` is `false`, persist anyways but omit the refresh
+   token as this is only relevant in case of a browser crash
 
-On `logout()` call:
- - Perform DELETE against token end-point to invalidate the session
+On `logout()`:
+ - Perform an HTTP DELETE against the token end-point to invalidate the session
  - Delete any persisted token info from local storage
-
-
-### License
-
-[MIT license](LICENSE.txt)
