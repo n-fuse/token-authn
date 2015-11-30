@@ -6,16 +6,15 @@ import StateMachine from 'state-machine';
 import log from 'log';
 import moment from 'moment';
 
+var pajax = new Pajax.URLEncoded({
+  headers: {
+    Accept: 'application/json'
+  }
+});
+
 class TokenAuthN {
-  constructor(oAuthURL) {
-    this.oAuthURL = oAuthURL;
-
-    this.pajax = new Pajax.URLEncoded({
-      headers: {
-        Accept: 'application/json'
-      }
-    });
-
+  constructor(...args) {
+    this.configure(...args);
     StateMachine.create({
       target: this,
       initial: 'newSession',
@@ -29,6 +28,10 @@ class TokenAuthN {
     });
 
     this._job = Promise.resolve();
+  }
+
+  configure(oAuthURL) {
+    this.oAuthURL = oAuthURL;
   }
 
   job(cb) {
@@ -130,7 +133,7 @@ class TokenAuthN {
                           refreshToken: data.refresh_token
                         };
                         this.tokenValid();
-                        this.scheduleTokenRefresh(25);
+                        this.scheduleTokenRefresh();
                         this.saveToken();
                       }).catch(err=> {
                         this.tokenInvalidated();
