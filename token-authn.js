@@ -6,12 +6,6 @@ import StateMachine from 'state-machine';
 import log from 'log';
 import moment from 'moment';
 
-var pajax = new Pajax.URLEncoded({
-  headers: {
-    Accept: 'application/json'
-  }
-});
-
 class TokenAuthN {
   constructor(...args) {
     this.configure(...args);
@@ -113,7 +107,8 @@ class TokenAuthN {
   login(username, password, rememberMe) {
     return this.job(()=>{
       this.useCredentials();
-      return this.pajax.post(this.oAuthURL)
+      return Pajax.URLEncoded.post(this.oAuthURL)
+                       .header('Accept', 'application/json')
                        .attach({
                               'grant_type': 'password',
                               'password': password,
@@ -171,7 +166,8 @@ class TokenAuthN {
         return Promise.resolve();
       }
 
-      return this.pajax.post(this.oAuthURL)
+      return Pajax.URLEncoded.post(this.oAuthURL)
+                       .header('Accept', 'application/json')
                        .attach({
                               grant_type: 'refresh_token',
                               client_id: 'res_owner@invend.eu',
