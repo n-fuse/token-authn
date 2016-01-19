@@ -115,7 +115,7 @@ class TokenAuthN {
                               'password': password,
                               'username': username
                              })
-                      .send()
+                      .fetch()
                       .then(res=>{
                         var data = res.body;
                         var now = moment();
@@ -151,7 +151,7 @@ class TokenAuthN {
     // delete token regardless of the outcome
     return Pajax.del(this.oAuthURL)
                 .before(this.addBearerToken())
-                .send()
+                .fetch()
                 .then(invalidate, invalidate);
   }
 
@@ -175,7 +175,7 @@ class TokenAuthN {
                               client_secret: 'res_owner',
                               refresh_token: tokenInfo.refreshToken
                              })
-                      .send()
+                      .fetch()
                       .then(res=>{
                         var data = res.body;
                         var now = moment();
@@ -287,10 +287,9 @@ class TokenAuthN {
         if (Pajax.parseURL(req.url).hostname === Pajax.parseURL(this.oAuthURL).hostname) {
           var tokenInfo = this.tokenInfo;
           if (tokenInfo && tokenInfo.accessToken) {
-            req.opts.headers = req.opts.headers || {};
-            req.opts.headers.Authorization = 'Bearer ' + tokenInfo.accessToken;
-          } else if(req.opts.headers && req.opts.headers.Authorization) {
-            delete req.opts.headers.Authorization;
+            req.header('Authorization', 'Bearer ' + tokenInfo.accessToken);
+          } else {
+            req.header('Authorization');
           }
         }
         return req;

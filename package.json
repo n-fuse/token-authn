@@ -1,6 +1,6 @@
 {
   "name": "token-authn",
-  "version": "0.2.10",
+  "version": "0.3.0",
   "keywords": [
     "token",
     "authentication"
@@ -23,7 +23,7 @@
     "registry": "jspm",
     "dependencies": {
       "log": "github:n-fuse/holzfella@^0.1.0",
-      "pajax": "github:n-fuse/pajax@^0.3.0",
+      "pajax": "github:n-fuse/pajax@^0.4.0",
       "moment": "^2.9.0",
       "lodash": "^3.2.0",
       "state-machine": "github:jakesgordon/javascript-state-machine@^2.3.5",
