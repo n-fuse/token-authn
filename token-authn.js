@@ -22,6 +22,7 @@ class TokenAuthN {
     });
 
     this._job = Promise.resolve();
+    this.oAuthURL = '/oauth2/token';
   }
 
   configure(oAuthURL) {
@@ -288,7 +289,7 @@ class TokenAuthN {
           if (tokenInfo && tokenInfo.accessToken) {
             req.opts.headers = req.opts.headers || {};
             req.opts.headers.Authorization = 'Bearer ' + tokenInfo.accessToken;
-          } else {
+          } else if(req.opts.headers && req.opts.headers.Authorization) {
             delete req.opts.headers.Authorization;
           }
         }
