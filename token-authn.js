@@ -287,9 +287,9 @@ class TokenAuthN {
         if (Pajax.parseURL(req.url).hostname === Pajax.parseURL(this.oAuthURL).hostname) {
           var tokenInfo = this.tokenInfo;
           if (tokenInfo && tokenInfo.accessToken) {
-            req.header('Authorization', 'Bearer ' + tokenInfo.accessToken);
+            return req.header('Authorization', 'Bearer ' + tokenInfo.accessToken);
           } else {
-            req.header('Authorization');
+            return req.header('Authorization');
           }
         }
         return req;
