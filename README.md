@@ -2,7 +2,7 @@
 
 OAuth 2 bearer token manager and client, supporting refresh tokens.
 
-This library is targeted for the browser as it makes use of 
+This library is targeted for the browser as it makes use of
 the the local storage API.
 
 ### Installation
@@ -17,7 +17,7 @@ import TokenAuthN from 'token-authn';
 
 var authN = new TokenAuthN(oAuthURL);
 
-authN.useLocalToken().then(...);
+authN.validateToken().then(...); // Validates the session token
 authN.login(username, password, rememberMe).then(...);
 authN.logout().then(...);
 
@@ -32,8 +32,12 @@ authN.tokenInfo; // Contains access and refresh token
 
 All API operations are promise based.
 
-On `useLocalToken()`:
- - See if persisted token info exists in local storage and read token info
+In Constructor
+- See if persisted token info exists in local storage and read token info
+- See if the 'access_token' is not expired yet
+- If it is not expired, set state to loggedIn
+
+On `validateToken()`:
  - See if the 'access_token' is not expired yet
  - If it is, see if a refresh token exists an use it to get a new access token
  - If it fails, the promise rejects
