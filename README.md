@@ -2,7 +2,7 @@
 
 OAuth 2 bearer token manager and client, supporting refresh tokens.
 
-This library is targeted for the browser as it makes use of 
+This library is targeted for the browser as it makes use of
 the the local storage API.
 
 ### Installation
@@ -17,7 +17,8 @@ import TokenAuthN from 'token-authn';
 
 var authN = new TokenAuthN(oAuthURL);
 
-authN.useLocalToken().then(...);
+authN.useLocalToken().then(...); // Reads and validates the access token
+authN.validateToken().then(...); // Validates the session token
 authN.login(username, password, rememberMe).then(...);
 authN.logout().then(...);
 
