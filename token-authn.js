@@ -217,10 +217,18 @@ export default class TokenAuthN {
     return this.tokenInfo.accessToken ? `Bearer ${this.tokenInfo.accessToken}` : null;
   }
 
+  matchHost(url) {
+    return (
+      !Pajax.URI(url).host() ||
+      !Pajax.URI(this.oAuthURL).host() ||
+      Pajax.URI(this.oAuthURL).host()===Pajax.URI(url).host()
+    );
+  }
+
   // Inject the bearer token into the request as soon as it is available
   addBearerToken(req) {
     // Only add token if req host is relative or matches the oauth url host
-    if(!Pajax.URI(req.url).host() || Pajax.URI(this.oAuthURL).host()===Pajax.URI(req.url).host()) {
+    if(this.matchHost(req.url)) {
       // Validate the token before using it
       return this.validateToken().then(()=>{
         if(this.authorizationHeader) {
@@ -235,8 +243,8 @@ export default class TokenAuthN {
 
   validateResponse(res) {
     // delete token when 401 invalid token
-    if (res.status === 401) {
-      this.tokenInvalidated();
+    if (this.matchHost(res.url) && res.status === 401) {
+      this.invalidateToken();
     }
     return res;
   }
